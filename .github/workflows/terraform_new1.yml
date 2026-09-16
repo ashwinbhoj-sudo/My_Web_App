@@ -1,17 +1,12 @@
-name: Terraform Deploy to OCI
-
-on:
-  push:
-    branches:
-      - main
-
-permissions:
-  contents: read
-
 jobs:
   terraform:
     name: OCI Infrastructure Provisioning
     runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        shell: bash
+        working-directory: infra/terraform
 
     env:
       TF_VAR_tenancy_ocid: ${{ secrets.OCI_TENANCY_OCID }}
@@ -25,12 +20,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Terraform
+      - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "1.9.0"
 
-      - name: Create OCI API key file
+      - name: Create OCI private-key file
         env:
           OCI_PRIVATE_KEY: ${{ secrets.OCI_PRIVATE_KEY }}
         run: |
@@ -39,7 +34,7 @@ jobs:
           chmod 600 "$RUNNER_TEMP/oci/oci_api_key.pem"
 
       - name: Terraform Init
-        run: terraform init -input=false
+        run: terraform init -input=false -upgrade
 
       - name: Terraform Format Check
         run: terraform fmt -check
