@@ -44,5 +44,20 @@ jobs:
           TF_VAR_compartment_id: ${{ secrets.OCI_COMPARTMENT_ID }}
           TF_VAR_ssh_public_key: ${{ secrets.OCI_SSH_PUBLIC_KEY }}
 
-      - name: Terraform Apply
-        run: terraform apply -auto-approve tfplan
+     - name: Create OCI API key file
+  env:
+    OCI_PRIVATE_KEY: ${{ secrets.OCI_PRIVATE_KEY }}
+  run: |
+    mkdir -p "$RUNNER_TEMP/oci"
+    printf '%s' "$OCI_PRIVATE_KEY" > "$RUNNER_TEMP/oci/oci_api_key.pem"
+    chmod 600 "$RUNNER_TEMP/oci/oci_api_key.pem"
+
+- name: Terraform apply
+  env:
+    TF_VAR_tenancy_ocid: ${{ secrets.TENANCY_OCID }}
+    TF_VAR_user_ocid: ${{ secrets.USER_OCID }}
+    TF_VAR_fingerprint: ${{ secrets.FINGERPRINT }}
+    TF_VAR_private_key_path: ${{ runner.temp }}/oci/oci_api_key.pem
+    TF_VAR_compartment_id: ${{ secrets.COMPARTMENT_OCID }}
+    TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
+  run: terraform apply -auto-approve
